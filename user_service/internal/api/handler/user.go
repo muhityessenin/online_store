@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"user_service/internal/domain/user"
 	"user_service/internal/service/interfaces"
 )
 
@@ -20,7 +21,12 @@ func (u *UserHandler) GetUsers(c *gin.Context) {
 	res, _ := u.UserService.GetUsers()
 	c.JSON(http.StatusOK, res)
 }
-func (u *UserHandler) CreateUser(c *gin.Context)  {}
+func (u *UserHandler) CreateUser(c *gin.Context) {
+	var input user.InputResponse
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest)
+	}
+}
 func (u *UserHandler) GetUserById(c *gin.Context) {}
 func (u *UserHandler) UpdateUser(c *gin.Context)  {}
 func (u *UserHandler) DeleteUser(c *gin.Context)  {}
