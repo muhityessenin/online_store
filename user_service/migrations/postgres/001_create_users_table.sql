@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR NOT NULL,
     email VARCHAR NOT NULL UNIQUE,
     address VARCHAR NOT NULL,
-    registration_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    registration_date DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     role VARCHAR NOT NULL CHECK (role IN ('admin', 'user', 'manager', 'developer'))
     );
 -- +goose StatementEnd

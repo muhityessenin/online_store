@@ -4,9 +4,9 @@ import "user_service/internal/domain/user"
 
 type UserService interface {
 	GetUsers() ([]user.Entity, error)
-	CreateUser() (int, error)
+	CreateUser(input *user.InputResponse) (int, error)
 	GetUserById(id string) (user.Entity, error)
-	UpdateUser() (int, error)
+	UpdateUser(id string, input *user.InputResponse) (int, error)
 	DeleteUser(id string) (int, error)
 	SearchUser(queryType, query string) ([]user.Entity, error)
 }

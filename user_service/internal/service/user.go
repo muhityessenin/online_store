@@ -18,16 +18,16 @@ func (u *UserService) GetUsers() ([]user.Entity, error) {
 	return u.UserRepository.GetUsers()
 }
 
-func (u *UserService) CreateUser() (int, error) {
-	return u.UserRepository.CreateUser()
+func (u *UserService) CreateUser(input *user.InputResponse) (int, error) {
+	return u.UserRepository.CreateUser(input)
 }
 
 func (u *UserService) GetUserById(id string) (user.Entity, error) {
 	return u.UserRepository.GetUserById(id)
 }
 
-func (u *UserService) UpdateUser() (int, error) {
-	return u.UserRepository.UpdateUser()
+func (u *UserService) UpdateUser(id string, input *user.InputResponse) (int, error) {
+	return u.UserRepository.UpdateUser(id, input)
 }
 
 func (u *UserService) DeleteUser(id string) (int, error) {
