@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	"net/http"
@@ -22,8 +23,15 @@ func (u *UserRepository) CreateUser(input *user.InputResponse) (int, error) {
 }
 
 func (u *UserRepository) UpdateUser(id string, input *user.InputResponse) (int, error) {
-	_, err := u.db.Exec("UPDATE users SET name = $1, email = $2, address = $3, registration_date = $4, role = $5 WHERE id = $5",
-		input.Name, input.Email, input.Address, input.RegistrationDate, input.Role, id)
+	_, err := u.GetUserById(id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return http.StatusNotFound, sql.ErrNoRows
+		}
+		return http.StatusInternalServerError, err
+	}
+	_, err = u.db.Exec("UPDATE users SET name = $1, email = $2, address = $3, registration_date = $4, role = $5 WHERE id = $6",
+		&input.Name, &input.Email, &input.Address, &input.RegistrationDate, &input.Role, id)
 	if err != nil {
 		return http.StatusBadRequest, err
 	}
@@ -31,7 +39,14 @@ func (u *UserRepository) UpdateUser(id string, input *user.InputResponse) (int, 
 }
 
 func (u *UserRepository) DeleteUser(id string) (int, error) {
-	_, err := u.db.Exec("DELETE FROM users WHERE id = $1", id)
+	_, err := u.GetUserById(id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return http.StatusNotFound, sql.ErrNoRows
+		}
+		return http.StatusInternalServerError, err
+	}
+	_, err = u.db.Exec("DELETE FROM users WHERE id = $1", id)
 	if err != nil {
 		return http.StatusBadRequest, err
 	}
@@ -43,13 +58,24 @@ func (u *UserRepository) SearchUser(queryType, query string) ([]user.Entity, err
 	var err error
 	var q string
 	if queryType == "name" {
-		q = fmt.Sprintf("SELECT * FROM users WHERE name = $1", query)
+		q = fmt.Sprintf("SELECT * FROM users WHERE name = $1")
 	} else if queryType == "email" {
-		q = fmt.Sprintf("SELECT * FROM users WHERE email = $1", query)
+		q = fmt.Sprintf("SELECT * FROM users WHERE email = $1")
 	}
-	err = u.db.Select(&users, q)
+	rows, err := u.db.Query(q, query)
 	if err != nil {
-		return nil, err
+		return users, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var entity user.Entity
+		if err := rows.Scan(&entity.Id, &entity.Name, &entity.Email, &entity.Address, &entity.RegistrationDate, &entity.Role); err != nil {
+			return users, err
+		}
+		users = append(users, entity)
+	}
+	if len(users) == 0 {
+		return nil, sql.ErrNoRows
 	}
 	return users, nil
 }
@@ -68,6 +94,9 @@ func (u *UserRepository) GetUsers() ([]user.Entity, error) {
 		}
 		users = append(users, user)
 	}
+	if len(users) == 0 {
+		return nil, sql.ErrNoRows
+	}
 	return users, nil
 }
 func (u *UserRepository) GetUserById(id string) (user.Entity, error) {
@@ -81,6 +110,9 @@ func (u *UserRepository) GetUserById(id string) (user.Entity, error) {
 		if err := row.Scan(&user.Id, &user.Name, &user.Email, &user.Address, &user.RegistrationDate, &user.Role); err != nil {
 			return user, err
 		}
+	}
+	if user.Id == "" {
+		return user, sql.ErrNoRows
 	}
 	return user, nil
 }
